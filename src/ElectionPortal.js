@@ -75,10 +75,10 @@ function ElectionPortal() {
         if(topic.length==0){
             window.alert( "Topic should not be empty.")
         }
-        else if(topic.length==0){
+        else if(option1.length==0){
             window.alert("Option1 should not be empty.")
         }
-        else if(topic.length==0){
+        else if(option2.length==0){
             window.alert("Option2 should not be empty.")
         }
         else{
@@ -195,7 +195,7 @@ function ElectionPortal() {
 
     return (
         <div className="container">
-            <p className="offset-4">Your Account:  {account}</p>
+            <p className="offset-4">Your Account:  {account}   (Refresh the page after account change.)</p>
             <h1 className="mt-2 text-center">Election Portal</h1>
             <div className="mt-2 d-flex justify-content-center">
                 <div>
