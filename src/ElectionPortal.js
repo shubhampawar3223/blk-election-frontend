@@ -12,13 +12,11 @@ function ElectionPortal() {
     const [toCreateTopic, setCreateTopic] = useState(false)
     const [createTopicCount, setCreateTopicCount] = useState(0)
     const [displayTopics, setDisplayTopics] = useState(false)
-    const [isVoted,setIsVoted] = useState(false)
-    const [warning1,setWarning1] = useState(false)
-    const [warning2,setWarning2] = useState(false)
+    const [isVoted, setIsVoted] = useState(false)
+    const [warning1, setWarning1] = useState(false)
+    const [warning2, setWarning2] = useState(false)
     const numOptionsRef = useRef()
-    let option1Ref = useRef(null)
-    let option2Ref = useRef(null)
-    let topicRef = useRef(null)
+    let ref1 = useRef(null)
 
     useEffect(async () => {
         // console.log("Hiee")
@@ -72,16 +70,32 @@ function ElectionPortal() {
     }
 
     const createTopic = async (topic, option1, option2) => {
+        try{
         console.log(topic, option1, option2, "ffkls")
+        if(topic.length==0){
+            window.alert( "Topic should not be empty.")
+        }
+        else if(topic.length==0){
+            window.alert("Option1 should not be empty.")
+        }
+        else if(topic.length==0){
+            window.alert("Option2 should not be empty.")
+        }
+        else{
         let response = await contract.methods.createTopic(topic, [option1, option2]).send({ from: account })
+        console.log(response)
         window.alert("New topic is created.")
         window.location.reload(false)
+        }
+        }
+        catch(error){
+        window.alert("Only Owner of the contract can create the topic.")
+        }
     }
 
     const selectTopic = async (val) => {
-        // e.preventDefault()
         setCreateTopic(false)
-        console.log(val[0])
+        // console.log(val[0])
         let result = await contract.methods.getOptions(+val[0]).call()
         console.log("resulttt", result)
         let tempOptions = []
@@ -95,7 +109,7 @@ function ElectionPortal() {
             tempOptions.push(option)
         }
         console.log(tempOptions)
-        setTopic({ topicId: +val[0], topicName: val.topicName,status:val.status, options: tempOptions })
+        setTopic({ topicId: +val[0], topicName: val.topicName, status: val.status, options: tempOptions })
         setTopicSelected(true)
     }
 
@@ -104,19 +118,25 @@ function ElectionPortal() {
         setTopicSelected(false)
     }
 
-    const initiateStartOrStop = async (topicId,statusCode) => {
+    const initiateStartOrStop = async (topicId, statusCode) => {
         console.log(topicId)
-        const response = await contract.methods.startVoting(topicId).send({ from: account })
+        let response
+        if (statusCode == 1) {
+            response = await contract.methods.startVoting(topicId).send({ from: account })
+        }
+        else {
+            response = await contract.methods.stopVoting(topicId).send({ from: account })
+        }
         console.log(response)
         if (response) {
             let tempTopic = topic
             tempTopic.status = statusCode
-            setTopic(()=>tempTopic)
+            setTopic(tempTopic)
             console.log("Topic", tempTopic)
-            if(statusCode==1){
-            window.alert("Voting has started.")
-            }else{
-            window.alert("Voting is stopped.")
+            if (statusCode == 1) {
+                window.alert("Voting has started.")
+            } else {
+                window.alert("Voting is stopped.")
             }
             window.location.reload()
 
@@ -127,41 +147,63 @@ function ElectionPortal() {
         console.log(topicId)
         const response = await contract.methods.removeTopic(topicId).send({ from: account })
         console.log(response)
-            let tempTopic = topic
-            tempTopic.isDeleted = true
-            setTopic(tempTopic)            
-            console.log("Topic", tempTopic)
-            window.alert("Topic is deleted.")
-            window.location.reload()
+        let tempTopic = topic
+        tempTopic.isDeleted = true
+        setTopic(tempTopic)
+        console.log("Topic", tempTopic)
+        window.alert("Topic is deleted.")
+        window.location.reload()
     }
 
-    const initiateVote = async(index) =>{
-        if(+topic.status ===1){
+    const initiateVote = async (index) => {
+        if (+topic.status === 1) {
             console.log(index)
-            setIsVoted(false)
-            const response = await contract.methods.vote(topic.topicId,index).send({ from: account })
-            let tempTopic = topic
-            tempTopic.options[index].vote = tempTopic.options[index].vote+1
-            window.alert("your vote is recorded")
-            window.location.reload()
+            setIsVoted(true)
+            const records = await contract.methods.getVoterRecords(topic.topicId).call();
+            console.log(records)
+            let isUserVoted = false
+            records.map((record) => {
+                if (record[1] === account) {
+                    isUserVoted = true
+                }
+            })
+            if (isUserVoted) {
+                console.log(ref1.current)
+                ref1.current.checked = false;
+                window.alert("You have already voted.")
+            }
+            else {
+                let response = await contract.methods.vote(topic.topicId, index).send({ from: account })
+                console.log(response)
+                let tempTopic = topic
+                tempTopic.options[index].votes = tempTopic.options[index].votes + 1
+                setTopic(topic)
+                console.log(tempTopic)
+                window.alert("your vote is recorded")
+                window.location.reload()
+            }
+
         }
-        else if(+topic.status ===0){
+        else if (+topic.status === 0) {
             window.alert("Voting has not started.")
         }
-        else{
+        else {
             window.alert("Voting has stopped.")
         }
-        
+
     }
 
     return (
         <div className="container">
+            <p className="offset-4">Your Account:  {account}</p>
             <h1 className="mt-2 text-center">Election Portal</h1>
-            <div className="mt-2 ">
-                <button className="btn btn-primary ml-4" onClick={() => initiateCreateTopic()}>Create Topic </button>
-
+            <div className="mt-2 d-flex justify-content-center">
+                <div>
+                <button className="btn btn-primary mt-4" onClick={() => initiateCreateTopic()}>Create Topic </button>
+                </div>
             </div>
-            <h3 className="mt-3">Select topic to vote</h3>
+            <div className="offset-3 col-6 mt-4">
+            <h3 className="mt-3 align-center">Select topic to vote</h3>
             <select className="form-select" aria-label="Default select example">
                 <option selected>Select Topic</option>
                 {
@@ -175,40 +217,39 @@ function ElectionPortal() {
                         <></>
                 }
             </select>
+            </div>
+            <div className="offset-5">
             {topics.length == 0 && <label className="">No topic currently available.</label>}
-
+            </div>    
             {
                 isTopicSelected ?
-                    <div>
+                    <div >
                         <div className="mt-4">
-                            <div className="offset-4 col-4" >
+                            <div className="offset-4 col-4 " >
 
-                                {topic.status == 0 && <button className="btn btn-primary m-2" onClick={() => initiateStartOrStop(+topic.topicId,1)}>Start Voting </button>}
-                                {topic.status == 1 && <button className="btn btn-primary m-2" onClick={() => initiateStartOrStop(+topic.topicId,2)}>Stop Voting </button>}
-                                <button className="btn btn-danger" onClick={() => initiateDeleteTopic(+topic.topicId)}>Delete Topic </button>
+                                {topic.status == 0 && <button className="btn btn-primary m-2" onClick={() => initiateStartOrStop(+topic.topicId, 1)}>Start Voting </button>}
+                                {topic.status == 1 && <button className="btn btn-primary m-2" onClick={() => initiateStartOrStop(+topic.topicId, 2)}>Stop Voting </button>}
+                                <button className="btn btn-danger m-2" onClick={() => initiateDeleteTopic(+topic.topicId)}>Delete Topic </button>
                             </div>
                             <div>
                                 {
                                     console.log(topics)
                                 }
-                                <h3 className="offset-4 col-4 align-center">Topic: {topic.topicName}</h3>
+                                <h3 className="offset-4 col-4 mx-auto">Topic: {topic.topicName}</h3>
                                 {
-                                        console.log(topic)
+                                    console.log(topic)
                                 }
                                 {
                                     topic.options.map((_option, i) => {
-                                        //    {_option.topicName}                              
-                                           console.log(topic)
                                         return (
-                                            <div className="offset-4 col-4 form-check mt-2" key={_option.topicId}>
-                                                {
-                                                    console.log(Boolean(+topic.status==1?true:false))
-                                                }
-                                                <input className="form-check-input" type="checkbox" value="" id="flexCheckDefault" onClick={()=>initiateVote(i)} disabled={isVoted}/>
+                                            <div className="offset-4 col-4 d-flex-justify-content-center mt-2" key={_option.topicId}>
+                                                <div className="form-check">
+                                                <input className="form-check-input" type="checkbox" value="" ref={ref1} id="flexCheckDefault" onClick={() => initiateVote(i)} disabled={isVoted} />
                                                 <label className="form-check-label" for="flexCheckDefault" disabled="true">
                                                     {_option.optionName}
                                                 </label>
                                                 <label className="offset-1" >{_option.votes} votes</label>
+                                                </div>
                                             </div>
                                         )
                                     })

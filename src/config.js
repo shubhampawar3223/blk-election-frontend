@@ -1,4 +1,4 @@
-export const Election_address = '0x5302fcd430f03cB333689dec727883f97963135C'
+export const Election_address = '0xb98f539362ba1492F9699aedEF63A55fBFbB38f2'
 export const Election_abi = [
   {
     "inputs": [],
@@ -280,5 +280,37 @@ export const Election_abi = [
     ],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_topicId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getVoterRecords",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "optionId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "voter",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct Election.VoterLog[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
   }
 ]
